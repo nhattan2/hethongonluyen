@@ -27,6 +27,7 @@
             justify-content: center;
             min-height: 100vh;
             user-select: none;
+            -webkit-user-select: none;
         }
 
         .container {
@@ -67,7 +68,6 @@
             border: 2px solid #eee;
             border-radius: 12px;
             cursor: pointer;
-            transition: 0.2s;
         }
 
         .option-item.selected {
@@ -120,6 +120,7 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
+            text-align: center;
         }
 
         .modal-box {
@@ -128,7 +129,12 @@
             border-radius: 20px;
             width: 90%;
             max-width: 400px;
-            text-align: center;
+        }
+
+        #cheat-overlay {
+            background: var(--error);
+            color: white;
+            flex-direction: column;
         }
 
         @keyframes slideIn {
@@ -145,20 +151,19 @@
     </style>
 </head>
 
-<body oncontextmenu="return false" oncopy="return false">
+<body oncontextmenu="return false" oncopy="return false" oncut="return false" onpaste="return false">
 
     <div class="container">
         <div id="setup" class="setup-area">
             <h2 style="color:var(--primary)">HỆ THỐNG THI GDQP HP2</h2>
             <div id="config" style="display:none;">
-                <p>Tìm thấy: <b id="count">0</b> câu hỏi có đáp án</p>
-                <p>Nhập số câu muốn thi:</p>
+                <p>Tổng số: <b id="count">0</b> câu hỏi</p>
                 <input type="number" id="numQuestions" value="10"
-                    style="padding:10px; width:80px; border-radius:8px; border:1px solid #ccc; text-align:center;">
+                    style="padding:10px; width:60px; border-radius:8px; border:1px solid #ccc; text-align:center;">
                 <button class="btn btn-next" onclick="startQuiz()"
                     style="display:block; width:100%; margin-top:20px;">BẮT ĐẦU THI</button>
             </div>
-            <div id="loading-msg">Đang nạp và phân tích đáp án từ file Word...</div>
+            <div id="loading-msg">Đang nạp dữ liệu...</div>
         </div>
 
         <div id="quiz-container" style="display:none;">
@@ -183,23 +188,46 @@
     <div id="confirm-modal" class="modal-overlay">
         <div class="modal-box">
             <h3>Nộp bài?</h3>
-            <div style="display:flex; gap:10px; margin-top:20px;">
-                <button class="btn btn-prev" onclick="closeConfirm()">HỦY</button>
-                <button class="btn btn-submit" onclick="finalSubmit()">NỘP</button>
-            </div>
+            <div style="display:flex; gap:10px;"><button class="btn btn-prev"
+                    onclick="closeConfirm()">HỦY</button><button class="btn btn-submit"
+                    onclick="finalSubmit()">NỘP</button></div>
         </div>
+    </div>
+
+    <div id="cheat-overlay" class="modal-overlay">
+        <h1>🚫 GIAN LẬN</h1>
+        <p id="cheat-reason"></p>
+        <button class="btn" style="background:white; color:var(--error)" onclick="location.reload()">THOÁT</button>
     </div>
 
     <script>
         let allData = [], testSet = [], currentIdx = 0, isQuizStarted = false, userAnswers = {};
 
+        // --- CƠ CHẾ CHỐNG GIAN LẬN ---
+        window.addEventListener('blur', () => { if (isQuizStarted) triggerCheat("Rời màn hình/Chuyển tab"); });
+        document.addEventListener('visibilitychange', () => { if (document.hidden && isQuizStarted) triggerCheat("Chuyển ứng dụng"); });
+        document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && isQuizStarted) triggerCheat("Thoát toàn màn hình"); });
+
+        document.onkeydown = (e) => {
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) || (e.ctrlKey && [85, 83, 80, 70].includes(e.keyCode))) return false;
+        };
+
+        setInterval(() => {
+            if (isQuizStarted) {
+                let s = performance.now();
+                debugger;
+                if (performance.now() - s > 100) triggerCheat("Mở công cụ kiểm tra");
+            }
+        }, 1000);
+
+        // --- XỬ LÝ DỮ LIỆU ---
         window.onload = () => {
             fetch("./data.docx").then(r => r.arrayBuffer()).then(ab => mammoth.convertToHtml({ arrayBuffer: ab }))
                 .then(res => {
                     parseContent(res.value);
                     document.getElementById('loading-msg').style.display = 'none';
                     document.getElementById('config').style.display = 'block';
-                }).catch(() => alert("Không tìm thấy file data.docx"));
+                }).catch(() => alert("Thiếu file data.docx"));
         };
 
         function parseContent(html) {
@@ -218,7 +246,6 @@
                 } else if (/^[A-D]\./.test(text) && currentQ) {
                     let optionText = text.replace(/^[A-D]\.\s*/, '').trim();
                     currentQ.o.push(optionText);
-                    // Kiểm tra in đậm (đáp án đúng)
                     if (p.querySelector('strong') || p.querySelector('b')) {
                         currentQ.a = optionText;
                     }
@@ -230,7 +257,7 @@
 
         async function startQuiz() {
             let n = parseInt(document.getElementById('numQuestions').value);
-            if (n < 1 || n > allData.length) return alert("Số câu không hợp lệ!");
+            if (n < 1 || n > allData.length) return alert("Số câu không hợp lệ");
             try {
                 await document.documentElement.requestFullscreen();
                 isQuizStarted = true;
@@ -239,7 +266,7 @@
                 document.getElementById('setup').style.display = 'none';
                 document.getElementById('quiz-container').style.display = 'block';
                 showQuestion(0);
-            } catch (e) { alert("Vui lòng cho phép toàn màn hình để bắt đầu!"); }
+            } catch (e) { alert("Phải bật Toàn màn hình mới được thi!"); }
         }
 
         function renderQuiz() {
@@ -248,7 +275,6 @@
             testSet.forEach((item, i) => {
                 let card = document.createElement('div');
                 card.className = `question-card q-card-${i}`;
-                // Trộn thứ tự đáp án để tăng độ khó
                 let sOpts = [...item.o].sort(() => Math.random() - 0.5);
                 card.innerHTML = `<span class="q-text">Câu ${i + 1}: ${item.q}</span>` +
                     sOpts.map(o => `<label class="option-item" onclick="sel(${i},'${o.replace(/'/g, "\\'")}',this)">${o}</label>`).join('');
@@ -260,7 +286,7 @@
             userAnswers[i] = v;
             el.parentElement.querySelectorAll('.option-item').forEach(l => l.classList.remove('selected'));
             el.classList.add('selected');
-            if (currentIdx < testSet.length - 1) setTimeout(() => { if (currentIdx == i) changeQuestion(1); }, 400);
+            if (currentIdx < testSet.length - 1) setTimeout(() => { if (currentIdx == i) changeQuestion(1); }, 300);
         }
 
         function showQuestion(i) {
@@ -276,19 +302,27 @@
 
         function changeQuestion(s) { showQuestion(currentIdx + s); }
 
+        function triggerCheat(r) {
+            isQuizStarted = false;
+            document.getElementById('cheat-reason').innerText = r;
+            document.getElementById('cheat-overlay').style.display = 'flex';
+            if (document.fullscreenElement) document.exitFullscreen();
+        }
+
         function preSubmitCheck() {
-            if (Object.keys(userAnswers).length < testSet.length) return alert("Bạn chưa hoàn thành hết các câu hỏi!");
+            if (Object.keys(userAnswers).length < testSet.length) return alert("Chưa làm hết!");
             document.getElementById('confirm-modal').style.display = 'flex';
         }
 
         function finalSubmit() {
-            let score = 0;
-            testSet.forEach((item, i) => { if (userAnswers[i] === item.a) score++; });
+            isQuizStarted = false;
+            let s = 0;
+            testSet.forEach((item, i) => { if (userAnswers[i] === item.a) s++; });
             document.getElementById('confirm-modal').style.display = 'none';
             document.getElementById('quiz-container').style.display = 'none';
             document.getElementById('score-board').style.display = 'block';
-            document.getElementById('final-score').innerText = (score / testSet.length * 10).toFixed(1);
-            document.getElementById('score-details').innerText = `Đúng ${score}/${testSet.length} câu.`;
+            document.getElementById('final-score').innerText = (s / testSet.length * 10).toFixed(1);
+            document.getElementById('score-details').innerText = `Đúng ${s}/${testSet.length} câu.`;
             if (document.fullscreenElement) document.exitFullscreen();
         }
 
