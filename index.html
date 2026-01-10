@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hệ Thống Thi</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #1b5e20;
+            --bg: #f0f4f3;
+            --error: #c62828;
+            --text: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: system-ui, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            margin-top: 5vh;
+            position: relative;
+        }
+
+        .setup-area {
+            text-align: center;
+        }
+
+        #docInput {
+            display: none;
+        }
+
+        .question-card {
+            display: none;
+        }
+
+        .question-card.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        .q-text {
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .option-item {
+            display: block;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .option-item.selected {
+            background: #e8f5e9;
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .nav-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .btn-prev {
+            background: #e2e8f0;
+        }
+
+        .btn-next {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-submit {
+            background: var(--error);
+            color: white;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            text-align: center;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        #cheat-overlay {
+            background: var(--error);
+            color: white;
+            flex-direction: column;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body oncontextmenu="return false" oncopy="return false" oncut="return false" onpaste="return false">
+
+    <div class="container">
+        <div id="setup" class="setup-area">
+            <h2 style="color:var(--primary)">HỆ THỐNG THI GDQP HP2</h2>
+            <div id="config" style="display:none;">
+                <p>Tổng số: <b id="count">0</b> câu hỏi</p>
+                <input type="number" id="numQuestions" value="10"
+                    style="padding:10px; width:60px; border-radius:8px; border:1px solid #ccc; text-align:center;">
+                <button class="btn btn-next" onclick="startQuiz()"
+                    style="display:block; width:100%; margin-top:20px;">BẮT ĐẦU THI</button>
+            </div>
+            <div id="loading-msg">Đang nạp dữ liệu...</div>
+        </div>
+
+        <div id="quiz-container" style="display:none;">
+            <div id="quiz-area"></div>
+            <div class="nav-footer">
+                <button class="btn btn-prev" id="prevBtn" onclick="changeQuestion(-1)">Lùi</button>
+                <span id="q-progress">0/0</span>
+                <button class="btn btn-next" id="nextBtn" onclick="changeQuestion(1)">Tiếp</button>
+                <button class="btn btn-submit" id="submitBtn" onclick="preSubmitCheck()" style="display:none;">NỘP
+                    BÀI</button>
+            </div>
+        </div>
+
+        <div id="score-board" style="display:none; text-align:center;">
+            <h2>KẾT QUẢ</h2>
+            <div style="font-size:3rem; font-weight:900; color:var(--primary)" id="final-score">0.0</div>
+            <p id="score-details"></p>
+            <button class="btn btn-next" onclick="location.reload()">THI LẠI</button>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="m-title"></h3>
+            <p id="m-msg"></p><button class="btn btn-next" onclick="closeModal()">ĐÓNG</button>
+        </div>
+    </div>
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Nộp bài?</h3>
+            <p>Hệ thống sẽ chấm điểm ngay.</p>
+            <div style="display:flex; gap:10px;"><button class="btn btn-prev"
+                    onclick="closeConfirm()">HỦY</button><button class="btn btn-submit"
+                    onclick="finalSubmit()">NỘP</button></div>
+        </div>
+    </div>
+    <div id="cheat-overlay" class="modal-overlay">
+        <h1>🚫 GIAN LẬN</h1>
+        <p id="cheat-reason"></p><button class="btn" style="background:white; color:var(--error)"
+            onclick="location.reload()">THOÁT</button>
+    </div>
+
+    <script>
+        let allData = [], testSet = [], currentIdx = 0, isQuizStarted = false, userAnswers = {};
+
+        window.addEventListener('blur', () => { if (isQuizStarted) triggerCheat("Rời màn hình/Chuyển tab"); });
+        document.addEventListener('visibilitychange', () => { if (document.hidden && isQuizStarted) triggerCheat("Chuyển ứng dụng"); });
+        document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && isQuizStarted) triggerCheat("Thoát toàn màn hình"); });
+
+        document.onkeydown = (e) => {
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) || (e.ctrlKey && [85, 83, 80, 70].includes(e.keyCode))) return false;
+        };
+
+        setInterval(() => {
+            if (isQuizStarted) {
+                let s = performance.now();
+                debugger;
+                if (performance.now() - s > 100) triggerCheat("Mở công cụ kiểm tra");
+            }
+        }, 1000);
+
+        window.onload = () => {
+            fetch("./data.docx").then(r => r.arrayBuffer()).then(ab => mammoth.extractRawText({ arrayBuffer: ab }))
+                .then(res => {
+                    parseContent(res.value);
+                    document.getElementById('loading-msg').style.display = 'none';
+                    document.getElementById('config').style.display = 'block';
+                }).catch(() => alert("Thiếu file data.docx"));
+        };
+
+        function parseContent(t) {
+            t.split(/Câu\s*\d+\s*[:.]/i).filter(b => b.trim()).forEach(b => {
+                let lines = b.split('\n').map(l => l.trim()).filter(l => l);
+                let q = "", opts = [], ans = "", found = false;
+                lines.forEach(l => {
+                    if (/^[A-D]\./.test(l)) {
+                        found = true;
+                        let txt = l.replace(/^[A-D]\.\s*/, '');
+                        opts.push(txt);
+                        if (l.toUpperCase().startsWith('A.')) ans = txt;
+                    } else if (!found) q += " " + l;
+                });
+                if (q && opts.length) allData.push({ q: q.trim(), o: opts, a: ans });
+            });
+            document.getElementById('count').innerText = allData.length;
+        }
+
+        async function startQuiz() {
+            let n = parseInt(document.getElementById('numQuestions').value);
+            if (n < 1 || n > allData.length) return;
+            try {
+                await document.documentElement.requestFullscreen();
+                isQuizStarted = true;
+                testSet = allData.sort(() => Math.random() - 0.5).slice(0, n);
+                renderQuiz();
+                document.getElementById('setup').style.display = 'none';
+                document.getElementById('quiz-container').style.display = 'block';
+                showQuestion(0);
+            } catch (e) { alert("Phải bật Toàn màn hình để thi!"); }
+        }
+
+        function renderQuiz() {
+            let area = document.getElementById('quiz-area');
+            area.innerHTML = '';
+            testSet.forEach((item, i) => {
+                let card = document.createElement('div');
+                card.className = `question-card q-card-${i}`;
+                let sOpts = [...item.o].sort(() => Math.random() - 0.5);
+                card.innerHTML = `<span class="q-text">Câu ${i + 1}: ${item.q}</span>` +
+                    sOpts.map(o => `<label class="option-item" onclick="sel(${i},'${o.replace(/'/g, "\\'")}',this)">${o}</label>`).join('');
+                area.appendChild(card);
+            });
+        }
+
+        function sel(i, v, el) {
+            userAnswers[i] = v;
+            el.parentElement.querySelectorAll('.option-item').forEach(l => l.classList.remove('selected'));
+            el.classList.add('selected');
+            if (currentIdx < testSet.length - 1) setTimeout(() => { if (currentIdx == i) changeQuestion(1); }, 300);
+        }
+
+        function showQuestion(i) {
+            currentIdx = i;
+            document.querySelectorAll('.question-card').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.q-card-${i}`).classList.add('active');
+            document.getElementById('prevBtn').disabled = i === 0;
+            let last = i === testSet.length - 1;
+            document.getElementById('nextBtn').style.display = last ? 'none' : 'block';
+            document.getElementById('submitBtn').style.display = last ? 'block' : 'none';
+            document.getElementById('q-progress').innerText = `${i + 1}/${testSet.length}`;
+        }
+
+        function changeQuestion(s) { showQuestion(currentIdx + s); }
+
+        function triggerCheat(r) {
+            isQuizStarted = false;
+            document.getElementById('cheat-reason').innerText = r;
+            document.getElementById('cheat-overlay').style.display = 'flex';
+            if (document.fullscreenElement) document.exitFullscreen();
+        }
+
+        function preSubmitCheck() {
+            if (Object.keys(userAnswers).length < testSet.length) return alert("Chưa làm hết!");
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+
+        function finalSubmit() {
+            isQuizStarted = false;
+            let s = 0;
+            testSet.forEach((item, i) => { if (userAnswers[i] === item.a) s++; });
+            document.getElementById('confirm-modal').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('score-board').style.display = 'block';
+            document.getElementById('final-score').innerText = (s / testSet.length * 10).toFixed(1);
+            document.getElementById('score-details').innerText = `Đúng ${s}/${testSet.length} câu.`;
+            if (document.fullscreenElement) document.exitFullscreen();
+        }
+
+        function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
+        function closeConfirm() { document.getElementById('confirm-modal').style.display = 'none'; }
+    </script>
+</body>
+
+</html>
