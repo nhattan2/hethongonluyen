@@ -25,7 +25,6 @@
             background: var(--bg);
             margin: 0;
             user-select: none;
-            overflow-x: hidden;
         }
 
         .container {
@@ -36,7 +35,6 @@
             border-radius: 15px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             margin: 5vh auto;
-            min-height: 60vh;
             text-align: center;
             position: relative;
         }
@@ -44,16 +42,16 @@
         .file-selector {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
             justify-content: center;
-            margin: 30px 0;
+            margin: 20px 0;
         }
 
         .btn-file {
-            flex: 1 1 200px;
+            flex: 1 1 150px;
             background: #fff;
             border: 1px solid #ddd;
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
             font-weight: bold;
             cursor: pointer;
@@ -79,10 +77,9 @@
             font-size: 1.5rem;
             font-weight: 900;
             color: var(--primary);
-            background: #fff5f5;
+            border: 1px solid var(--primary);
             padding: 5px 15px;
             border-radius: 8px;
-            border: 1px solid var(--primary);
         }
 
         .q-card {
@@ -97,18 +94,12 @@
             border-radius: 8px;
             cursor: pointer;
             transition: 0.2s;
-            font-size: 1rem;
-        }
-
-        .option:hover {
-            background: #f9f9f9;
         }
 
         .option.active {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
-            font-weight: 500;
         }
 
         .btn-start {
@@ -119,7 +110,6 @@
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
-            font-size: 1rem;
         }
 
         .nav-btn {
@@ -128,21 +118,6 @@
             border-radius: 8px;
             font-weight: bold;
             border: none;
-            transition: 0.3s;
-        }
-
-        .btn-back {
-            background: #eee;
-            color: #555;
-        }
-
-        .btn-submit {
-            background: var(--dark);
-            color: white;
-        }
-
-        .swal2-confirm {
-            background-color: var(--primary) !important;
         }
 
         #custom-alert {
@@ -152,24 +127,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             z-index: 999999;
             justify-content: center;
             align-items: center;
             color: white;
             text-align: center;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .footer {
@@ -192,74 +155,64 @@
             display: inline-block;
             margin-bottom: 15px;
             font-weight: bold;
-            font-size: 0.9rem;
         }
     </style>
 </head>
 
-<body oncontextmenu="return false;">
+<body>
 
     <div class="container" id="app">
         <div id="setup-area">
             <h1 style="color: var(--primary);">HỆ THỐNG ÔN LUYỆN</h1>
             <div class="file-selector">
-                <button class="btn-file" onclick="loadFile('data1.docx', this)">ĐỀ 01 (Thầy giải)</button>
-                <button class="btn-file" onclick="loadFile('data2.docx', this)">ĐỀ 02 (Studocu)</button>
+                <button class="btn-file" onclick="loadFile('data1.docx', this)">ĐỀ 01(Thầy giải)</button>
+                <button class="btn-file" onclick="loadFile('data2.docx', this)">ĐỀ 02(Studocu)</button>
             </div>
 
             <div id="ready-area" style="display:none;">
-                <div class="info-count">📄 Tổng số câu có trong file: <span id="total-q">0</span> câu</div>
-
+                <div class="info-count">📄 File có: <span id="total-q">0</span> câu</div>
                 <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <p>Số câu muốn làm: <input type="number" id="limitQ" value="20"
-                            style="width:70px; padding:8px; border-radius:5px; border:1px solid #ddd;"></p>
-                    <p>Thời gian làm bài (phút): <input type="number" id="duration" value="15"
-                            style="width:70px; padding:8px; border-radius:5px; border:1px solid #ddd;"></p>
+                    <p>Số câu: <input type="number" id="limitQ" value="20" style="width:60px;"> phút: <input
+                            type="number" id="duration" value="15" style="width:60px;"></p>
                 </div>
-                <button class="btn-start" onclick="startQuiz()">BẮT ĐẦU LÀM BÀI</button>
+                <button class="btn-start" onclick="checkAndStart()">BẮT ĐẦU LÀM BÀI</button>
             </div>
         </div>
 
         <div id="quiz-area" style="display:none;">
             <div class="quiz-header">
-                <div id="timer">00:00</div>
-                <b id="count-txt" style="color: var(--dark);">Câu: 1/20</b>
+                <div id="timer">00:00</div><b id="count-txt">Câu: 1/20</b>
             </div>
             <div id="render-target"></div>
             <div style="margin-top: 25px; display: flex; justify-content: space-between;">
-                <button onclick="go(-1)" id="prev-btn" class="nav-btn btn-back">Quay lại</button>
-                <button onclick="finalSubmit()" class="nav-btn btn-submit">NỘP BÀI</button>
+                <button onclick="go(-1)" id="prev-btn" class="nav-btn">Quay lại</button>
+                <button onclick="finalSubmit()" class="nav-btn" style="background:var(--dark); color:white;">NỘP
+                    BÀI</button>
             </div>
         </div>
 
         <div id="result-area" style="display:none;">
             <h2 style="color: var(--primary);">KẾT QUẢ</h2>
-            <div style="font-size: 4rem; font-weight: 900; color: var(--dark);" id="final-score">0.0</div>
-            <p id="stats" style="font-size: 1.2rem; font-weight: bold;"></p>
+            <div style="font-size: 4rem; font-weight: 900;" id="final-score">0.0</div>
+            <p id="stats"></p>
             <button class="btn-start" onclick="location.reload()">LÀM LẠI</button>
         </div>
 
-        <div class="footer">
-            Bản quyền thuộc <b>Tân</b> và <a href="https://t.me/Dai_Hoc_Duy_Tan"
-                target="_blank">https://t.me/Dai_Hoc_Duy_Tan</a>
-        </div>
+        <div class="footer">Bản quyền thuộc <b>Tân</b> và <a href="https://t.me/Dai_Hoc_Duy_Tan"
+                target="_blank">https://t.me/Dai_Hoc_Duy_Tan</a></div>
     </div>
 
     <div id="custom-alert">
         <div>
-            <h1 style="font-size: 3rem; color: #ff4d4d;">⚠️ TRUY CẬP BỊ KHÓA</h1>
-            <p style="font-size: 1.3rem;">Hệ thống phát hiện hành vi rời khỏi màn hình.<br>Bài thi đã được tự động nộp.
-            </p>
-            <div style="font-size: 4rem; margin: 25px 0; color: #ffeb3b; font-weight: bold;">ĐIỂM: <span
-                    id="lock-score">0</span></div>
-            <button class="btn-start" onclick="location.reload()">QUAY LẠI TRANG CHỦ</button>
+            <h1 style="color: #ff4d4d;">⚠️ TRUY CẬP BỊ KHÓA</h1>
+            <p>Phát hiện hành vi rời khỏi màn hình.</p>
+            <div style="font-size: 4rem; margin: 20px 0; color: #ffeb3b;">ĐIỂM: <span id="lock-score">0</span></div>
+            <button class="btn-start" onclick="location.reload()">QUAY LẠI</button>
         </div>
     </div>
 
     <script>
         let bank = [], quiz = [], current = 0, userAnswers = {}, active = false, timeLeft = 0, timerInterval;
-
-        document.onkeydown = e => { if (e.keyCode == 123 || (e.ctrlKey && [85, 83, 67, 86].includes(e.keyCode))) return false; };
 
         function loadFile(path, btn) {
             document.querySelectorAll('.btn-file').forEach(b => b.classList.remove('selected'));
@@ -268,12 +221,8 @@
                 mammoth.convertToHtml({ arrayBuffer: ab }).then(res => {
                     parseDocx(res.value);
                     document.getElementById('ready-area').style.display = 'block';
-                    // Hiển thị tổng số câu lên giao diện
                     document.getElementById('total-q').innerText = bank.length;
-                    document.getElementById('limitQ').max = bank.length;
                 });
-            }).catch(() => {
-                Swal.fire('Lỗi', 'Không thể tải file dữ liệu!', 'error');
             });
         }
 
@@ -293,47 +242,42 @@
             if (cur) bank.push(cur);
         }
 
-        async function startQuiz() {
+        // HÀM QUAN TRỌNG: Kiểm tra môi trường trước khi bắt đầu
+        async function checkAndStart() {
             let limit = parseInt(document.getElementById('limitQ').value);
             timeLeft = parseInt(document.getElementById('duration').value) * 60;
 
-            if (!limit || limit < 1) {
-                Swal.fire('Thông báo', 'Vui lòng nhập số câu hợp lệ!', 'warning');
-                return;
-            }
-            if (limit > bank.length) {
-                Swal.fire('Thông báo', `File này chỉ có tối đa ${bank.length} câu!`, 'warning');
-                return;
-            }
+            if (!limit || limit < 1) return Swal.fire('Lỗi', 'Nhập số câu!', 'error');
 
+            // Thử bật Fullscreen
             try {
                 await document.documentElement.requestFullscreen();
-                quiz = bank.sort(() => .5 - Math.random()).slice(0, limit);
-                active = true;
-                document.getElementById('setup-area').style.display = 'none';
-                document.getElementById('quiz-area').style.display = 'block';
-                startTimer();
-                renderQuestion();
             } catch (e) {
-                Swal.fire('Yêu cầu', 'Bạn phải chạy Fullscreen để làm bài!', 'info');
+                // Nếu là Telegram/Safari không hỗ trợ Fullscreen, chỉ hiện thông báo nhẹ rồi cho qua
+                console.warn("Fullscreen not supported");
             }
+
+            // Bắt đầu bài thi bất kể có Fullscreen được hay không
+            quiz = bank.sort(() => .5 - Math.random()).slice(0, limit);
+            active = true;
+            document.getElementById('setup-area').style.display = 'none';
+            document.getElementById('quiz-area').style.display = 'block';
+            startTimer();
+            renderQuestion();
         }
 
         function startTimer() {
             timerInterval = setInterval(() => {
                 let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
                 document.getElementById('timer').innerText = `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    showFinalScore();
-                }
+                if (timeLeft <= 0) { clearInterval(timerInterval); showFinalScore(); }
                 timeLeft--;
             }, 1000);
         }
 
         function renderQuestion() {
             let q = quiz[current];
-            let html = `<div class="q-card"><p style="font-size:1.15rem; font-weight:bold; line-height:1.5;">${q.q}</p>`;
+            let html = `<div class="q-card"><p style="font-weight:bold;">${q.q}</p>`;
             q.o.forEach(o => {
                 let cls = userAnswers[current] === o ? 'active' : '';
                 html += `<div class="option ${cls}" onclick="selectOption('${o.replace(/'/g, "\\'")}')">${o}</div>`;
@@ -351,6 +295,7 @@
 
         function go(step) { current += step; renderQuestion(); }
 
+        // CHỈ KHÓA KHI THỰC SỰ RỜI TAB (Mất tiêu điểm)
         window.onblur = () => {
             if (active) {
                 active = false;
@@ -364,15 +309,8 @@
         };
 
         function finalSubmit() {
-            let done = Object.keys(userAnswers).length;
-            Swal.fire({
-                title: 'Nộp bài',
-                text: `Bạn đã làm ${done}/${quiz.length} câu. Xác nhận nộp bài?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Đồng ý',
-                cancelButtonText: 'Làm tiếp'
-            }).then((r) => { if (r.isConfirmed) { active = false; clearInterval(timerInterval); showFinalScore(); } });
+            Swal.fire({ title: 'Nộp bài?', icon: 'question', showCancelButton: true, confirmButtonText: 'Đồng ý' })
+                .then((r) => { if (r.isConfirmed) { active = false; clearInterval(timerInterval); showFinalScore(); } });
         }
 
         function showFinalScore() {
@@ -381,7 +319,7 @@
             document.getElementById('quiz-area').style.display = 'none';
             document.getElementById('result-area').style.display = 'block';
             document.getElementById('final-score').innerText = (score / quiz.length * 10).toFixed(1);
-            document.getElementById('stats').innerText = `Đúng: ${score} / Tổng: ${quiz.length}`;
+            document.getElementById('stats').innerText = `Đúng: ${score} / ${quiz.length}`;
             if (document.fullscreenElement) document.exitFullscreen();
         }
     </script>
