@@ -141,7 +141,6 @@
             color: white;
         }
 
-        /* Tùy chỉnh màu sắc nút của SweetAlert2 cho đồng bộ */
         .swal2-confirm {
             background-color: var(--primary) !important;
         }
@@ -184,6 +183,17 @@
             text-decoration: none;
             font-weight: bold;
         }
+
+        .info-count {
+            background: #eef;
+            color: #3f51b5;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 
@@ -193,12 +203,15 @@
         <div id="setup-area">
             <h1 style="color: var(--primary);">HỆ THỐNG ÔN LUYỆN</h1>
             <div class="file-selector">
-                <button class="btn-file" onclick="loadFile('data1.docx', this)">ĐỀ ÔN TẬP 01 (thầy giải)</button>
-                <button class="btn-file" onclick="loadFile('data2.docx', this)">ĐỀ ÔN TẬP 02 (Studocu)</button>
+                <button class="btn-file" onclick="loadFile('data1.docx', this)">ĐỀ 01 (Thầy giải)</button>
+                <button class="btn-file" onclick="loadFile('data2.docx', this)">ĐỀ 02 (Studocu)</button>
             </div>
+
             <div id="ready-area" style="display:none;">
+                <div class="info-count">📄 Tổng số câu có trong file: <span id="total-q">0</span> câu</div>
+
                 <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <p>Số câu ngẫu nhiên: <input type="number" id="limitQ" value="20"
+                    <p>Số câu muốn làm: <input type="number" id="limitQ" value="20"
                             style="width:70px; padding:8px; border-radius:5px; border:1px solid #ddd;"></p>
                     <p>Thời gian làm bài (phút): <input type="number" id="duration" value="15"
                             style="width:70px; padding:8px; border-radius:5px; border:1px solid #ddd;"></p>
@@ -235,7 +248,8 @@
     <div id="custom-alert">
         <div>
             <h1 style="font-size: 3rem; color: #ff4d4d;">⚠️ TRUY CẬP BỊ KHÓA</h1>
-            <p style="font-size: 1.3rem;">Hệ thống phát hiện hành vi gian lận.<br>Bài thi đã được tự động nộp.</p>
+            <p style="font-size: 1.3rem;">Hệ thống phát hiện hành vi rời khỏi màn hình.<br>Bài thi đã được tự động nộp.
+            </p>
             <div style="font-size: 4rem; margin: 25px 0; color: #ffeb3b; font-weight: bold;">ĐIỂM: <span
                     id="lock-score">0</span></div>
             <button class="btn-start" onclick="location.reload()">QUAY LẠI TRANG CHỦ</button>
@@ -254,6 +268,9 @@
                 mammoth.convertToHtml({ arrayBuffer: ab }).then(res => {
                     parseDocx(res.value);
                     document.getElementById('ready-area').style.display = 'block';
+                    // Hiển thị tổng số câu lên giao diện
+                    document.getElementById('total-q').innerText = bank.length;
+                    document.getElementById('limitQ').max = bank.length;
                 });
             }).catch(() => {
                 Swal.fire('Lỗi', 'Không thể tải file dữ liệu!', 'error');
@@ -280,8 +297,12 @@
             let limit = parseInt(document.getElementById('limitQ').value);
             timeLeft = parseInt(document.getElementById('duration').value) * 60;
 
-            if (!limit || limit < 1 || isNaN(timeLeft)) {
-                Swal.fire('Thông báo', 'Vui lòng nhập đầy đủ số câu và thời gian!', 'warning');
+            if (!limit || limit < 1) {
+                Swal.fire('Thông báo', 'Vui lòng nhập số câu hợp lệ!', 'warning');
+                return;
+            }
+            if (limit > bank.length) {
+                Swal.fire('Thông báo', `File này chỉ có tối đa ${bank.length} câu!`, 'warning');
                 return;
             }
 
@@ -294,7 +315,7 @@
                 startTimer();
                 renderQuestion();
             } catch (e) {
-                Swal.fire('Yêu cầu', 'Bạn phải cho phép Fullscreen để làm bài bảo mật!', 'info');
+                Swal.fire('Yêu cầu', 'Bạn phải chạy Fullscreen để làm bài!', 'info');
             }
         }
 
@@ -304,7 +325,7 @@
                 document.getElementById('timer').innerText = `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    Swal.fire('Hết giờ!', 'Hệ thống đang tự động nộp bài.', 'info').then(() => showFinalScore());
+                    showFinalScore();
                 }
                 timeLeft--;
             }, 1000);
@@ -312,7 +333,7 @@
 
         function renderQuestion() {
             let q = quiz[current];
-            let html = `<div class="q-card"><p style="font-size:1.15rem; font-weight:bold; line-height:1.5; color: #333;">${q.q}</p>`;
+            let html = `<div class="q-card"><p style="font-size:1.15rem; font-weight:bold; line-height:1.5;">${q.q}</p>`;
             q.o.forEach(o => {
                 let cls = userAnswers[current] === o ? 'active' : '';
                 html += `<div class="option ${cls}" onclick="selectOption('${o.replace(/'/g, "\\'")}')">${o}</div>`;
@@ -325,18 +346,10 @@
         function selectOption(val) {
             userAnswers[current] = val;
             renderQuestion();
-            setTimeout(() => {
-                if (current < quiz.length - 1) {
-                    current++;
-                    renderQuestion();
-                }
-            }, 300);
+            setTimeout(() => { if (current < quiz.length - 1) { current++; renderQuestion(); } }, 300);
         }
 
-        function go(step) {
-            current += step;
-            renderQuestion();
-        }
+        function go(step) { current += step; renderQuestion(); }
 
         window.onblur = () => {
             if (active) {
@@ -351,24 +364,15 @@
         };
 
         function finalSubmit() {
-            // Kiểm tra xem đã làm hết chưa
             let done = Object.keys(userAnswers).length;
-            let msg = done < quiz.length ? `Bạn mới làm ${done}/${quiz.length} câu. Vẫn nộp bài chứ?` : "Xác nhận nộp bài làm?";
-
             Swal.fire({
                 title: 'Nộp bài',
-                text: msg,
+                text: `Bạn đã làm ${done}/${quiz.length} câu. Xác nhận nộp bài?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Đồng ý',
                 cancelButtonText: 'Làm tiếp'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    active = false;
-                    clearInterval(timerInterval);
-                    showFinalScore();
-                }
-            });
+            }).then((r) => { if (r.isConfirmed) { active = false; clearInterval(timerInterval); showFinalScore(); } });
         }
 
         function showFinalScore() {
@@ -377,7 +381,7 @@
             document.getElementById('quiz-area').style.display = 'none';
             document.getElementById('result-area').style.display = 'block';
             document.getElementById('final-score').innerText = (score / quiz.length * 10).toFixed(1);
-            document.getElementById('stats').innerText = `Kết quả: Đúng ${score} trên tổng số ${quiz.length} câu`;
+            document.getElementById('stats').innerText = `Đúng: ${score} / Tổng: ${quiz.length}`;
             if (document.fullscreenElement) document.exitFullscreen();
         }
     </script>
