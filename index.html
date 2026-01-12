@@ -78,7 +78,6 @@
             font-weight: bold;
         }
 
-        /* Nút chọn đề */
         .btn-file {
             padding: 10px 20px;
             border: 2px solid var(--primary);
@@ -259,8 +258,7 @@
 <body oncontextmenu="return false;">
     <div class="container">
         <div style="text-align: center; position: relative; margin-bottom: 20px;">
-            <h2 style="margin: 0; font-size: 1.4rem; color: var(--primary); letter-spacing: 1px;">HỆ THỐNG THI
-            </h2>
+            <h2 style="margin: 0; font-size: 1.4rem; color: var(--primary); letter-spacing: 1px;">HỆ THỐNG THI</h2>
             <button onclick="toggleDarkMode()"
                 style="position: absolute; right: 0; top: 0; background: none; border: none; cursor: pointer; font-size: 1.2rem;">🌓</button>
         </div>
@@ -279,7 +277,7 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                     <div class="input-group">
-                        <label>Số câu hỏi (121 câu)</label>
+                        <label id="limit-label">Số câu hỏi</label>
                         <input type="number" id="limitQ" placeholder="Nhập số câu">
                     </div>
                     <div class="input-group" id="time-input-box">
@@ -323,8 +321,11 @@
     <script>
         let bank = [], quiz = [], current = 0, userAnswers = {}, active = false, timeLeft = 0, timerInterval;
         let mode = 'test', isReview = false, currentFileName = "";
+        let blurTimeout;
 
-        // Chặn phím và thoát Fullscreen
+        const isTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData !== "";
+
+        // CHỐNG GIAN LẬN: CHẶN PHÍM VÀ MẤT TẬP TRUNG
         window.addEventListener('keydown', function (e) {
             const blockedKeys = ['F12', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Meta'];
             if (active && mode === 'test' && (blockedKeys.includes(e.key) || e.ctrlKey || e.shiftKey)) {
@@ -335,17 +336,25 @@
         });
 
         function checkEsc() {
-            if (!document.fullscreenElement && active && mode === 'test') {
+            // Chỉ check Fullscreen thoát ra nếu KHÔNG phải Telegram (vì Tele không có fullscreen thực thụ)
+            if (!isTelegram && !document.fullscreenElement && active && mode === 'test') {
                 Swal.fire({ title: 'Cảnh báo!', text: 'Bạn đã thoát chế độ thi!', icon: 'error' }).then(() => showResult());
             }
         }
         document.addEventListener('fullscreenchange', checkEsc);
 
+        // Chống gian lận cho cả Chrome và Telegram với cơ chế Delay chống khóa nhầm
         window.addEventListener('blur', () => {
             if (active && mode === 'test') {
-                Swal.fire({ title: 'VI PHẠM!', text: 'Rời khỏi màn hình thi!', icon: 'error' }).then(() => showResult());
+                blurTimeout = setTimeout(() => {
+                    if (active && mode === 'test') {
+                        Swal.fire({ title: 'VI PHẠM!', text: 'Rời khỏi màn hình thi!', icon: 'error' }).then(() => showResult());
+                    }
+                }, 1500); // Đợi 1.5s để lọc các lỗi mất focus giả trên Telegram
             }
         });
+
+        window.addEventListener('focus', () => { clearTimeout(blurTimeout); });
 
         function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
@@ -364,9 +373,8 @@
                 parseData(res.value);
                 document.getElementById('ready-area').style.display = 'flex';
                 document.getElementById('limitQ').value = bank.length;
-                // Cập nhật nhãn số câu tối đa
-                document.querySelector('label[for="limitQ"]')?.innerText || (document.querySelector('.input-group label').innerText = `Số câu hỏi (tối đa ${bank.length})`);
-            }));
+                document.getElementById('limit-label').innerText = `Số câu hỏi (tối đa ${bank.length})`;
+            })).catch(() => Swal.fire("Lỗi", "Không thể tải file đề!", "error"));
         }
 
         function parseData(html) {
@@ -389,7 +397,7 @@
             if (mode === 'test') {
                 timeLeft = parseInt(document.getElementById('duration').value) * 60;
                 startTimer();
-                document.documentElement.requestFullscreen().catch(() => { });
+                if (!isTelegram) document.documentElement.requestFullscreen().catch(() => { });
             }
             active = true; current = 0; userAnswers = {}; isReview = false;
             document.getElementById('setup-area').style.display = 'none';
@@ -451,7 +459,7 @@
 
         function showResult() {
             active = false; clearInterval(timerInterval);
-            if (document.fullscreenElement) document.exitFullscreen();
+            if (!isTelegram && document.fullscreenElement) document.exitFullscreen();
             let correct = 0; quiz.forEach((q, i) => { if (userAnswers[i] === q.a) correct++; });
             document.getElementById('quiz-area').style.display = 'none';
             document.getElementById('result-area').style.display = 'flex';
