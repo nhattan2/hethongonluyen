@@ -18,6 +18,7 @@
             --border: #dfe6e9;
             --success: #27ae60;
             --accent: #e74c3c;
+            --bookmark: #f39c12;
         }
 
         body.dark-mode {
@@ -36,7 +37,6 @@
             user-select: none;
         }
 
-        html,
         body {
             margin: 0;
             padding: 0;
@@ -61,26 +61,21 @@
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
             display: flex;
             flex-direction: column;
-            border: 1px solid var(--border);
             position: relative;
         }
 
-        .copyright-tag {
-            font-size: 0.75rem;
-            text-align: center;
-            margin-top: 10px;
-            color: #777;
-        }
-
-        .copyright-tag a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: bold;
+        /* Files Selector */
+        .file-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         .btn-file {
-            padding: 10px 20px;
-            border: 2px solid var(--primary);
+            padding: 12px 20px;
+            border: 2px solid var(--border);
             border-radius: 12px;
             background: var(--input-bg);
             color: var(--text);
@@ -90,12 +85,14 @@
         }
 
         .btn-file.selected {
-            background: var(--primary) !important;
-            color: var(--gold) !important;
-            border-color: var(--gold) !important;
-            box-shadow: 0 0 15px rgba(179, 18, 23, 0.4);
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(179, 18, 23, 0.2);
         }
 
+        /* Mode & Inputs */
         .mode-box {
             display: flex;
             gap: 10px;
@@ -119,6 +116,7 @@
             color: var(--primary);
         }
 
+        /* Quiz UI */
         #render-target {
             flex: 1;
             overflow-y: auto;
@@ -126,31 +124,47 @@
             margin-bottom: 10px;
         }
 
-        .question-text {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary);
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
             margin-bottom: 15px;
         }
 
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1.4;
+        }
+
+        .bookmark-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: #ccc;
+            transition: 0.2s;
+        }
+
+        .bookmark-btn.active {
+            color: var(--bookmark);
+        }
+
         .option {
-            padding: 12px 18px;
+            padding: 14px 20px;
             border: 2px solid var(--border);
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             border-radius: 12px;
             cursor: pointer;
             background: var(--input-bg);
-            color: var(--text);
+            transition: 0.2s;
         }
 
-        .option.correct {
-            background: var(--success) !important;
-            color: white !important;
-        }
-
-        .option.wrong {
-            background: var(--accent) !important;
-            color: white !important;
+        .option:hover {
+            background: rgba(0, 0, 0, 0.02);
+            border-color: #bdc3c7;
         }
 
         .option.selected-now {
@@ -158,11 +172,24 @@
             background: rgba(179, 18, 23, 0.05);
         }
 
+        .option.correct {
+            background: var(--success) !important;
+            color: white !important;
+            border-color: var(--success);
+        }
+
+        .option.wrong {
+            background: var(--accent) !important;
+            color: white !important;
+            border-color: var(--accent);
+        }
+
+        /* Navigation Grid */
         .q-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
             gap: 6px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             max-height: 100px;
             overflow-y: auto;
             background: var(--input-bg);
@@ -180,40 +207,53 @@
             font-weight: bold;
             border-radius: 8px;
             border: 1.5px solid var(--border);
-            background: #fff;
-            color: #333;
             cursor: pointer;
+            position: relative;
+            transition: 0.2s;
+        }
+
+        .q-item.done {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .q-item.current {
+            border: 2.5px solid var(--text);
+            transform: scale(1.1);
+            z-index: 2;
+        }
+
+        .q-item.bookmarked::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: var(--bookmark);
+            border-radius: 50%;
+            border: 1px solid white;
         }
 
         .q-item.correct-grid {
             background: var(--success) !important;
-            color: white !important;
+            color: white;
         }
 
         .q-item.wrong-grid {
             background: var(--accent) !important;
-            color: white !important;
-        }
-
-        .q-item.done-working {
-            background: var(--primary) !important;
-            color: white !important;
-        }
-
-        .q-item.current {
-            border: 2px solid var(--text);
-            transform: scale(1.1);
+            color: white;
         }
 
         .nav-area {
             display: flex;
             gap: 10px;
-            margin-top: auto;
         }
 
         .nav-btn {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             border-radius: 12px;
             font-weight: 700;
             cursor: pointer;
@@ -224,140 +264,190 @@
 
         .btn-main {
             background: var(--primary);
-            color: #fff;
-            padding: 15px;
+            color: white;
             border: none;
-            border-radius: 12px;
-            font-weight: 800;
-            cursor: pointer;
+        }
+
+        #anti-cheat-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .input-group label {
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: var(--text);
-        }
-
-        .input-group input {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--input-bg);
-            color: var(--text);
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            display: none;
+            color: white;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 1.5rem;
+            padding: 20px;
         }
     </style>
 </head>
 
 <body oncontextmenu="return false;">
+    <div id="anti-cheat-overlay">
+        <div>
+            <h1 style="color: var(--accent);">CẢNH BÁO GIAN LẬN!</h1>
+            <p>Bạn đã rời khỏi trang thi.<br>Quay lại ngay để không bị hủy bài làm!</p>
+        </div>
+    </div>
+
     <div class="container">
         <div style="text-align: center; position: relative; margin-bottom: 20px;">
-            <h2 style="margin: 0; font-size: 1.4rem; color: var(--primary); letter-spacing: 1px;">HỆ THỐNG THI</h2>
+            <h2 style="margin: 0; font-size: 1.4rem; color: var(--primary); letter-spacing: 1px;">HỆ THỐNG THI
+            </h2>
             <button onclick="toggleDarkMode()"
                 style="position: absolute; right: 0; top: 0; background: none; border: none; cursor: pointer; font-size: 1.2rem;">🌓</button>
         </div>
 
         <div id="setup-area">
-            <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-                <button class="btn-file" id="btn-d1" onclick="loadFile('gdqp01.docx', 'btn-d1', 'GDQP 01')">GDQP 01</button>
-                <button class="btn-file" id="btn-d2" onclick="loadFile('gdqp02.docx', 'btn-d2', 'GDQP 02')">GDQP 02</button>
+            <p style="text-align: center; font-weight: bold; margin-bottom: 15px;">Chọn các đề muốn thi</p>
+            <div class="file-selector">
+                <button class="btn-file" data-path="gdqp01.docx" onclick="toggleFile(this)">GDQP 01</button>
+                <button class="btn-file" data-path="gdqp02.docx" onclick="toggleFile(this)">GDQP 02</button>
+
             </div>
 
             <div id="ready-area" style="display: none; flex-direction: column;">
                 <div class="mode-box">
-                    <div class="mode-card active" id="m-test" onclick="setMode('test')">THI THỬ</div>
+                    <div class="mode-card active" id="m-test" onclick="setMode('test')">KIỂM TRA</div>
                     <div class="mode-card" id="m-practice" onclick="setMode('practice')">LUYỆN TẬP</div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <div class="input-group">
-                        <label id="limit-label">Số câu hỏi</label>
-                        <input type="number" id="limitQ" placeholder="Nhập số câu">
+                    <div style="display: flex; flex-direction: column;">
+                        <label id="limit-label" style="font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">Số câu
+                            ngẫu nhiên</label>
+                        <input type="number" id="limitQ"
+                            style="padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
                     </div>
-                    <div class="input-group" id="time-input-box">
-                        <label>Thời gian (phút)</label>
-                        <input type="number" id="duration" value="15">
+                    <div id="time-input-box" style="display: flex; flex-direction: column;">
+                        <label style="font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">Thời gian
+                            (phút)</label>
+                        <input type="number" id="duration" value="15"
+                            style="padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
                     </div>
                 </div>
-                <button class="btn-main" onclick="startQuiz()">BẮT ĐẦU</button>
+                <button class="nav-btn btn-main" onclick="prepareQuiz()" style="font-size: 1.1rem; padding: 16px;">BẮT
+                    ĐẦU</button>
             </div>
         </div>
 
         <div id="quiz-area" style="display: none; flex-direction: column; height: 100%;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span id="timer" style="font-weight: 900; color: var(--primary);">00:00</span>
-                <span id="count-txt" style="font-weight: bold;">1/20</span>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
+                <span id="timer" style="font-weight: 900; color: var(--primary); font-size: 1.3rem;">00:00</span>
+                <span id="count-txt"
+                    style="font-weight: bold; background: #eee; padding: 4px 12px; border-radius: 20px;">1/20</span>
             </div>
             <div id="render-target"></div>
             <div class="q-grid" id="q-grid"></div>
             <div class="nav-area">
                 <button onclick="go(-1)" class="nav-btn">QUAY LẠI</button>
                 <button onclick="go(1)" class="nav-btn">TIẾP THEO</button>
-                <button id="submit-btn" class="nav-btn"
-                    style="background: var(--primary); color: white; border: none;">NỘP BÀI</button>
+                <button id="action-btn" class="nav-btn btn-main" onclick="handleMainAction()">NỘP BÀI</button>
             </div>
         </div>
 
         <div id="result-area"
             style="display: none; text-align: center; flex-direction: column; justify-content: center; height: 100%;">
-            <h1 id="final-score" style="font-size: 4rem; color: var(--primary); margin: 0;">0.0</h1>
-            <p id="stats" style="font-weight: bold;"></p>
-            <button class="btn-main" onclick="reviewMode()">XEM LẠI</button>
-            <button class="btn-main" style="background: #666; margin-top: 10px;"
-                onclick="location.reload()">THOÁT</button>
+            <h1 id="final-score" style="font-size: 5rem; color: var(--primary); margin: 0;">0.0</h1>
+            <p id="stats" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 30px;"></p>
+            <div
+                style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 400px; margin: 0 auto;">
+                <button class="nav-btn" style="background: var(--success); color: white; border: none;"
+                    onclick="reviewMode()">XEM LẠI ĐÁP ÁN</button>
+                <button id="btn-retry-wrong" class="nav-btn"
+                    style="background: var(--bookmark); color: white; border: none;" onclick="practiceWrong()">LUYỆN CÂU
+                    SAI</button>
+                <button class="nav-btn" style="background: #34495e; color: white; border: none;"
+                    onclick="location.reload()">TRANG CHỦ</button>
+            </div>
         </div>
 
-        <div class="copyright-tag">
-            Bản quyền của Tân và <a href="https://t.me/Dai_Hoc_Duy_Tan" target="_blank">https://t.me/Dai_Hoc_Duy_Tan</a>
+        <div class="copyright-tag" style="text-align: center; font-size: 0.75rem; margin-top: 10px; color: #95a5a6;">
+            Bản quyền của Tân & <a href="https://t.me/Dai_Hoc_Duy_Tan"> https://t.me/Dai_Hoc_Duy_Tan</a>
         </div>
     </div>
 
     <script>
-        let bank = [], quiz = [], current = 0, userAnswers = {}, active = false, timeLeft = 0, timerInterval;
-        let mode = 'test', isReview = false, currentFileName = "";
-        let blurTimeout;
-
-        const isTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData !== "";
-
-        // CHỐNG GIAN LẬN: CHẶN PHÍM VÀ MẤT TẬP TRUNG
-        window.addEventListener('keydown', function (e) {
-            const blockedKeys = ['F12', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Meta'];
-            if (active && mode === 'test' && (blockedKeys.includes(e.key) || e.ctrlKey || e.shiftKey)) {
-                e.preventDefault();
-                if (e.key === 'Escape') checkEsc();
-                return false;
-            }
-        });
-
-        function checkEsc() {
-            // Chỉ check Fullscreen thoát ra nếu KHÔNG phải Telegram (vì Tele không có fullscreen thực thụ)
-            if (!isTelegram && !document.fullscreenElement && active && mode === 'test') {
-                Swal.fire({ title: 'Cảnh báo!', text: 'Bạn đã thoát chế độ thi!', icon: 'error' }).then(() => showResult());
-            }
-        }
-        document.addEventListener('fullscreenchange', checkEsc);
-
-        // Chống gian lận cho cả Chrome và Telegram với cơ chế Delay chống khóa nhầm
-        window.addEventListener('blur', () => {
-            if (active && mode === 'test') {
-                blurTimeout = setTimeout(() => {
-                    if (active && mode === 'test') {
-                        Swal.fire({ title: 'VI PHẠM!', text: 'Rời khỏi màn hình thi!', icon: 'error' }).then(() => showResult());
-                    }
-                }, 1500); // Đợi 1.5s để lọc các lỗi mất focus giả trên Telegram
-            }
-        });
-
-        window.addEventListener('focus', () => { clearTimeout(blurTimeout); });
+        let fullBank = [], quiz = [], current = 0, userAnswers = {}, bookmarks = {};
+        let active = false, timeLeft = 0, timerInterval, mode = 'test', isReview = false;
+        let selectedFiles = new Set();
+        let wrongQuestions = [];
 
         function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
+        // --- QUẢN LÝ FILE ---
+        function toggleFile(btn) {
+            const path = btn.getAttribute('data-path');
+            if (selectedFiles.has(path)) {
+                selectedFiles.delete(path);
+                btn.classList.remove('selected');
+            } else {
+                selectedFiles.add(path);
+                btn.classList.add('selected');
+            }
+            loadBanks();
+        }
+
+        async function loadBanks() {
+            fullBank = [];
+            for (let path of selectedFiles) {
+                try {
+                    const r = await fetch(path);
+                    const ab = await r.arrayBuffer();
+                    const res = await mammoth.convertToHtml({ arrayBuffer: ab });
+                    parseToBank(res.value);
+                } catch (e) { console.error("Không tìm thấy file:", path); }
+            }
+            if (fullBank.length > 0) {
+                document.getElementById('ready-area').style.display = 'flex';
+                document.getElementById('limitQ').value = Math.min(40, fullBank.length);
+                document.getElementById('limit-label').innerText = `Số câu ngẫu nhiên (Tối đa ${fullBank.length})`;
+            } else {
+                document.getElementById('ready-area').style.display = 'none';
+            }
+        }
+
+        function parseToBank(html) {
+            let div = document.createElement('div'); div.innerHTML = html;
+            let ps = div.querySelectorAll('p'), cur = null;
+            ps.forEach(p => {
+                let txt = p.textContent.trim();
+                if (/^Câu\s*\d+/.test(txt)) {
+                    if (cur) fullBank.push(cur);
+                    cur = { q: txt, o: [], a: "" };
+                } else if (/^[A-D][:.]/.test(txt) && cur) {
+                    let op = txt.replace(/^[A-D][:.]\s*/, '');
+                    cur.o.push(op);
+                    if (p.querySelector('b, strong')) cur.a = op;
+                }
+            });
+            if (cur) fullBank.push(cur);
+        }
+
+        // --- CHỐNG GIAN LẬN ---
+        function handleCheat() {
+            if (active && mode === 'test' && !isReview) {
+                document.getElementById('anti-cheat-overlay').style.display = 'flex';
+                // Nếu rời quá lâu thì tự nộp bài
+                setTimeout(() => {
+                    if (document.getElementById('anti-cheat-overlay').style.display === 'flex') {
+                        submitQuiz();
+                        document.getElementById('anti-cheat-overlay').style.display = 'none';
+                        Swal.fire("VI PHẠM!", "Bạn đã bị nộp bài tự động do rời khỏi màn hình quá lâu.", "error");
+                    }
+                }, 5000);
+            }
+        }
+        window.onblur = handleCheat;
+        window.onfocus = () => document.getElementById('anti-cheat-overlay').style.display = 'none';
+        document.addEventListener('visibilitychange', () => { if (document.hidden) handleCheat(); });
+
+        // --- LOGIC CHÍNH ---
         function setMode(m) {
             mode = m;
             document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
@@ -365,43 +455,29 @@
             document.getElementById('time-input-box').style.visibility = (m === 'practice') ? 'hidden' : 'visible';
         }
 
-        function loadFile(path, id, name) {
-            currentFileName = name;
-            document.querySelectorAll('.btn-file').forEach(b => b.classList.remove('selected'));
-            document.getElementById(id).classList.add('selected');
-            fetch(path).then(r => r.arrayBuffer()).then(ab => mammoth.convertToHtml({ arrayBuffer: ab }).then(res => {
-                parseData(res.value);
-                document.getElementById('ready-area').style.display = 'flex';
-                document.getElementById('limitQ').value = bank.length;
-                document.getElementById('limit-label').innerText = `Số câu hỏi (tối đa ${bank.length})`;
-            })).catch(() => Swal.fire("Lỗi", "Không thể tải file đề!", "error"));
-        }
+        function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
 
-        function parseData(html) {
-            bank = []; let div = document.createElement('div'); div.innerHTML = html;
-            let ps = div.querySelectorAll('p'), cur = null;
-            ps.forEach(p => {
-                let txt = p.textContent.trim();
-                if (/^Câu\s*\d+/.test(txt)) { if (cur) bank.push(cur); cur = { q: txt, o: [], a: "" }; }
-                else if (/^[A-D][:.]/.test(txt) && cur) {
-                    let op = txt.replace(/^[A-D][:.]\s*/, ''); cur.o.push(op);
-                    if (p.querySelector('b, strong')) cur.a = op;
-                }
-            });
-            if (cur) bank.push(cur);
+        function prepareQuiz() {
+            let limit = parseInt(document.getElementById('limitQ').value) || fullBank.length;
+            let shuffled = shuffle([...fullBank]).slice(0, limit);
+            quiz = shuffled.map(item => ({ ...item, o: shuffle([...item.o]) }));
+            startQuiz();
         }
 
         function startQuiz() {
-            let limit = parseInt(document.getElementById('limitQ').value) || bank.length;
-            quiz = bank.sort(() => .5 - Math.random()).slice(0, limit);
+            active = true; current = 0; userAnswers = {}; bookmarks = {}; isReview = false;
+            document.getElementById('setup-area').style.display = 'none';
+            document.getElementById('result-area').style.display = 'none';
+            document.getElementById('quiz-area').style.display = 'flex';
+            document.getElementById('action-btn').innerText = "NỘP BÀI";
+
             if (mode === 'test') {
                 timeLeft = parseInt(document.getElementById('duration').value) * 60;
+                document.getElementById('timer').style.display = 'block';
                 startTimer();
-                if (!isTelegram) document.documentElement.requestFullscreen().catch(() => { });
+            } else {
+                document.getElementById('timer').style.display = 'none';
             }
-            active = true; current = 0; userAnswers = {}; isReview = false;
-            document.getElementById('setup-area').style.display = 'none';
-            document.getElementById('quiz-area').style.display = 'flex';
             renderQuestion(); renderGrid();
         }
 
@@ -410,13 +486,18 @@
             timerInterval = setInterval(() => {
                 let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
                 document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' + s : s}`;
-                if (timeLeft-- <= 0) showResult();
+                if (timeLeft-- <= 0) submitQuiz();
             }, 1000);
         }
 
         function renderQuestion() {
             let q = quiz[current];
-            let html = `<div class="question-text">${q.q}</div>`;
+            let html = `
+                <div class="question-header">
+                    <div class="question-text">${q.q}</div>
+                    <button class="bookmark-btn ${bookmarks[current] ? 'active' : ''}" onclick="toggleBookmark(${current})">🔖</button>
+                </div>`;
+
             q.o.forEach(o => {
                 let cls = "";
                 if (isReview || (mode === 'practice' && userAnswers[current])) {
@@ -430,11 +511,13 @@
             updateGrid();
         }
 
+        function toggleBookmark(idx) { bookmarks[idx] = !bookmarks[idx]; renderQuestion(); }
+
         function selectOption(val) {
             if (isReview || (mode === 'practice' && userAnswers[current])) return;
             userAnswers[current] = val;
             renderQuestion();
-            if (mode === 'test') setTimeout(() => go(1), 300);
+            if (mode === 'test') setTimeout(() => go(1), 200);
         }
 
         function renderGrid() {
@@ -445,11 +528,11 @@
             document.querySelectorAll('.q-item').forEach((el, i) => {
                 el.className = 'q-item';
                 if (i === current) el.classList.add('current');
+                if (bookmarks[i]) el.classList.add('bookmarked');
                 if (userAnswers[i]) {
                     if (isReview || mode === 'practice') {
-                        if (userAnswers[i] === quiz[i].a) el.classList.add('correct-grid');
-                        else el.classList.add('wrong-grid');
-                    } else { el.classList.add('done-working'); }
+                        el.classList.add(userAnswers[i] === quiz[i].a ? 'correct-grid' : 'wrong-grid');
+                    } else { el.classList.add('done'); }
                 }
             });
         }
@@ -457,25 +540,44 @@
         function jumpTo(i) { current = i; renderQuestion(); }
         function go(s) { if (current + s >= 0 && current + s < quiz.length) { current += s; renderQuestion(); } }
 
-        function showResult() {
+        // --- XỬ LÝ NÚT NỘP BÀI / THOÁT ---
+        function handleMainAction() {
+            if (isReview) {
+                // Nếu đang ở chế độ xem lại, nhấn nút đỏ này sẽ thoát ra kết quả
+                document.getElementById('quiz-area').style.display = 'none';
+                document.getElementById('result-area').style.display = 'flex';
+            } else {
+                Swal.fire({ title: 'Nộp bài?', text: "Bạn có chắc muốn kết thúc?", icon: 'question', showCancelButton: true }).then(r => { if (r.isConfirmed) submitQuiz(); });
+            }
+        }
+
+        function submitQuiz() {
             active = false; clearInterval(timerInterval);
-            if (!isTelegram && document.fullscreenElement) document.exitFullscreen();
-            let correct = 0; quiz.forEach((q, i) => { if (userAnswers[i] === q.a) correct++; });
+            let correct = 0; wrongQuestions = [];
+            quiz.forEach((q, i) => {
+                if (userAnswers[i] === q.a) correct++;
+                else wrongQuestions.push(q);
+            });
+
             document.getElementById('quiz-area').style.display = 'none';
             document.getElementById('result-area').style.display = 'flex';
             document.getElementById('final-score').innerText = (correct / quiz.length * 10).toFixed(1);
             document.getElementById('stats').innerText = `Đúng ${correct}/${quiz.length} câu`;
+            document.getElementById('btn-retry-wrong').style.display = wrongQuestions.length > 0 ? 'block' : 'none';
         }
-
-        document.getElementById('submit-btn').onclick = () => {
-            Swal.fire({ title: 'Nộp bài?', icon: 'question', showCancelButton: true }).then(r => { if (r.isConfirmed) showResult(); });
-        };
 
         function reviewMode() {
             isReview = true; current = 0;
             document.getElementById('result-area').style.display = 'none';
             document.getElementById('quiz-area').style.display = 'flex';
+            document.getElementById('action-btn').innerText = "QUAY LẠI KẾT QUẢ";
             renderQuestion();
+        }
+
+        function practiceWrong() {
+            quiz = wrongQuestions.map(q => ({ ...q, o: shuffle([...q.o]) }));
+            mode = 'practice';
+            startQuiz();
         }
     </script>
 </body>
