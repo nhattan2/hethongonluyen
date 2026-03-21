@@ -414,17 +414,35 @@
         }
 
         function parseToBank(html) {
-            let div = document.createElement('div'); div.innerHTML = html;
+            let div = document.createElement('div');
+            div.innerHTML = html;
             let ps = div.querySelectorAll('p'), cur = null;
+
             ps.forEach(p => {
                 let txt = p.textContent.trim();
-                if (/^Câu\s*\d+/.test(txt)) {
+                if (!txt) return;
+
+                // 1. Nhận diện câu hỏi (Bắt đầu bằng chữ "Câu")
+                if (/^Câu\s*\d+/i.test(txt)) {
                     if (cur) fullBank.push(cur);
                     cur = { q: txt, o: [], a: "" };
-                } else if (/^[A-D][:.]/.test(txt) && cur) {
-                    let op = txt.replace(/^[A-D][:.]\s*/, '');
+                }
+                // 2. Nhận diện đáp án (Mọi dòng nằm dưới câu hỏi và không phải là "Câu...")
+                else if (cur) {
+                    // Loại bỏ ký tự A. B. C. D. ở đầu nếu có để lấy nội dung thuần
+                    let op = txt.replace(/^[A-D][\s.:]+\s*/i, '');
                     cur.o.push(op);
-                    if (p.querySelector('b, strong')) cur.a = op;
+
+                    // KIỂM TRA BÔI ĐẬM: Nếu dòng này có bất kỳ dấu hiệu in đậm nào, chọn làm đáp án đúng
+                    const isBold = p.querySelector('b, strong') !== null ||
+                        p.innerHTML.toLowerCase().includes('strong') ||
+                        p.innerHTML.toLowerCase().includes('<b>') ||
+                        p.getAttribute('style')?.includes('bold');
+
+                    if (isBold) {
+                        cur.a = op;
+                        console.log("Đã tìm thấy đáp án đúng:", op); // Kiểm tra trong F12 Console
+                    }
                 }
             });
             if (cur) fullBank.push(cur);
@@ -505,7 +523,8 @@
                     if (o === q.a) cls = "correct";
                     else if (userAnswers[current] === o) cls = "wrong";
                 } else if (userAnswers[current] === o) { cls = "selected-now"; }
-                html += `<div class="option ${cls}" onclick="selectOption('${o.replace(/'/g, "\\'")}')">${o}</div>`;
+                // Dùng encodeURIComponent để mã hóa toàn bộ nội dung đáp án, tránh lỗi dấu phẩy/ngoặc kép
+                html += `<div class="option ${cls}" onclick="selectOption('${encodeURIComponent(o)}')">${o}</div>`;
             });
             document.getElementById('render-target').innerHTML = html;
             document.getElementById('count-txt').innerText = `${current + 1}/${quiz.length}`;
@@ -514,8 +533,12 @@
 
         function toggleBookmark(idx) { bookmarks[idx] = !bookmarks[idx]; renderQuestion(); }
 
-        function selectOption(val) {
+        function selectOption(valEncoded) {
             if (isReview || (mode === 'practice' && userAnswers[current])) return;
+
+            // Giải mã lại nội dung đáp án
+            let val = decodeURIComponent(valEncoded);
+
             userAnswers[current] = val;
             renderQuestion();
             if (mode === 'test') setTimeout(() => go(1), 200);
